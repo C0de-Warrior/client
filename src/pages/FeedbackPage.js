@@ -4,14 +4,21 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styles from './FeedbackPage.module.css';
 
 function FeedbackPage() {
-  const [feedbackData, setFeedbackData] = useState([]);
+  const [feedbackData, setFeedbackData] = useState();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const backendURL = process.env.REACT_APP_BACKEND_URL; // Get the environment variable
 
   // Function to fetch feedback data from the backend
   const fetchFeedback = useCallback(async () => {
+    if (!backendURL) {
+      console.error("REACT_APP_BACKEND_URL is not set!");
+      setError(new Error("Backend URL not configured."));
+      setLoading(false);
+      return;
+    }
     try {
-      const response = await fetch('http://localhost:5000/submissions');
+      const response = await fetch(`${backendURL}/submissions`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -19,7 +26,7 @@ function FeedbackPage() {
       // Ensure the returned data is an array
       if (!Array.isArray(data)) {
         console.error('Fetched data is not an array:', data);
-        setFeedbackData([]);
+        setFeedbackData();
       } else {
         setFeedbackData(data);
       }
@@ -29,7 +36,7 @@ function FeedbackPage() {
       setLoading(false);
       console.error('Error fetching feedback data:', err);
     }
-  }, []);
+  }, [backendURL]);
 
   // Initial fetch when the component mounts
   useEffect(() => {
@@ -38,7 +45,8 @@ function FeedbackPage() {
 
   // WebSocket setup: listen for new submissions and trigger a fetch
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080/');
+    const wsURL = process.env.REACT_APP_WEBSOCKET_URL || 'ws://localhost:8080/'; // Use env var or default
+    const ws = new WebSocket(wsURL);
     ws.onopen = () => {
       console.log('WebSocket connected');
     };
