@@ -2,7 +2,7 @@ const CACHE_NAME = 'my-pwa-cache-v1';
 const API_CACHE = 'api-cache-v1';
 
 const STATIC_ASSETS = [
-  '/',         // App shell (index.html)
+  '/',          // App shell (index.html)
   '/index.html',
   '/static/js/bundle.js',
   '/static/js/main.chunk.js',
@@ -38,10 +38,10 @@ self.addEventListener('activate', event => {
         // Proactively cache API data
         caches.open(API_CACHE).then(cache => {
           console.log('[Service Worker] Proactively caching API data');
-          return fetch('/submissions') // Assuming your API endpoint is '/submissions'
+          return fetch(new URL('/submissions', self.registration.scope).href)
             .then(response => {
               if (response.ok) {
-                return cache.put('/submissions', response.clone()); // Use the API endpoint as the cache key
+                return cache.put(new URL('/submissions', self.registration.scope).href, response.clone()); // Use the full URL as the cache key for consistency
               } else {
                 console.warn('[Service Worker] Failed to proactively cache API data:', response.status);
               }

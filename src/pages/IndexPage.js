@@ -12,6 +12,7 @@ function IndexPage() {
   const [submitMessage, setSubmitMessage] = useState('');
   const [submitType, setSubmitType] = useState(''); // "success" or "error"
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const backendURL = process.env.REACT_APP_BACKEND_URL; // Get the backend URL environment variable
   //const navigate = useNavigate();
 
   // Monitor online/offline status
@@ -27,7 +28,7 @@ function IndexPage() {
       window.removeEventListener('online', updateOnlineStatus);
       window.removeEventListener('offline', updateOnlineStatus);
     };
-  }, []);
+  },);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -54,8 +55,15 @@ function IndexPage() {
     e.preventDefault();
     if (!validateForm()) return;
 
+    if (!backendURL) {
+      console.error("REACT_APP_BACKEND_URL is not set!");
+      setSubmitMessage('Error: Backend URL not configured.');
+      setSubmitType('error');
+      return;
+    }
+
     try {
-      const response = await fetch('http://localhost:5000/submissions', {
+      const response = await fetch(`${backendURL}/submissions`, { // Use the backendURL variable
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
