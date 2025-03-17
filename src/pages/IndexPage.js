@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './IndexPage.module.css';
 
@@ -11,7 +11,23 @@ function IndexPage() {
   const [errors, setErrors] = useState({});
   const [submitMessage, setSubmitMessage] = useState('');
   const [submitType, setSubmitType] = useState(''); // "success" or "error"
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const navigate = useNavigate();
+
+  // Monitor online/offline status
+  useEffect(() => {
+    const updateOnlineStatus = () => {
+      setIsOffline(!navigator.onLine);
+    };
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    return () => {
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+    };
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -57,15 +73,18 @@ function IndexPage() {
       setSubmitMessage('Your comment has been successfully added!');
       setSubmitType('success');
 
-      // Clear the message after 3 seconds (do not navigate away)
+      // Clear the message after 3 seconds (keep index page visible)
       setTimeout(() => {
         setSubmitMessage('');
         setSubmitType('');
-        // navigate('/farm-sales'); // Removed navigation to keep index page visible
       }, 3000);
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      setSubmitMessage('There was an error submitting your comment. Please try again.');
+      if (!navigator.onLine) {
+        setSubmitMessage('You are offline. Your message has been saved and will be submitted when you get back online.');
+      } else {
+        setSubmitMessage('There was an error submitting your comment. Please try again.');
+      }
       setSubmitType('error');
       setTimeout(() => {
         setSubmitMessage('');
@@ -76,6 +95,11 @@ function IndexPage() {
 
   return (
     <div className={styles.container}>
+      {isOffline && (
+        <div className={styles.offlineNotice}>
+          You are currently offline. Some functionality may be limited.
+        </div>
+      )}
       <h1>Welcome to Fresh Farm Services</h1>
       <p>Thank you for choosing Fresh Farm Services. We truly value your feedback!</p>
       <p>If you have any suggestions or comments, please let us know below:</p>

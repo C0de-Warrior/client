@@ -1,4 +1,5 @@
 // src/pages/FeedbackPage.js
+
 import React, { useState, useEffect, useCallback } from 'react';
 import styles from './FeedbackPage.module.css';
 
@@ -15,7 +16,13 @@ function FeedbackPage() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setFeedbackData(data);
+      // Ensure the returned data is an array
+      if (!Array.isArray(data)) {
+        console.error('Fetched data is not an array:', data);
+        setFeedbackData([]);
+      } else {
+        setFeedbackData(data);
+      }
       setLoading(false);
     } catch (err) {
       setError(err);
@@ -58,36 +65,48 @@ function FeedbackPage() {
   }, [fetchFeedback]);
 
   if (loading) {
-    return <div className={styles.container}><p>Loading data...</p></div>;
+    return (
+      <div className={styles.container}>
+        <p>Loading data...</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className={styles.container}><p>Error: {error.message}</p></div>;
+    return (
+      <div className={styles.container}>
+        <p>Error: {error.message}</p>
+      </div>
+    );
   }
 
   return (
     <div className={styles.container}>
       <h1>Feedback Page</h1>
-      <table className={styles.feedbackTable}>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Message</th>
-            <th>AI Response</th>
-          </tr>
-        </thead>
-        <tbody>
-          {feedbackData.map((feedback) => (
-            <tr key={feedback._id}>
-              <td>{feedback.name}</td>
-              <td>{feedback.email}</td>
-              <td>{feedback.message}</td>
-              <td>{feedback.aiResponse || 'N/A'}</td>
+      {feedbackData.length === 0 ? (
+        <p>No feedback data available.</p>
+      ) : (
+        <table className={styles.feedbackTable}>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Message</th>
+              <th>AI Response</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {feedbackData.map((feedback) => (
+              <tr key={feedback._id}>
+                <td>{feedback.name}</td>
+                <td>{feedback.email}</td>
+                <td>{feedback.message}</td>
+                <td>{feedback.aiResponse || 'N/A'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
