@@ -57,9 +57,6 @@ self.addEventListener('activate', event => {
 
 // Fetch event – Return a valid Response in every branch
 self.addEventListener('fetch', event => {
-  // Only handle GET requests
-  if (event.request.method !== 'GET') return;
-
   event.respondWith((async () => {
     // For navigation requests, serve index.html from cache if network fails
     if (event.request.mode === 'navigate') {
@@ -78,8 +75,26 @@ self.addEventListener('fetch', event => {
       }
     }
 
-    // For API requests (e.g. requests containing '/submissions')
-    if (event.request.url.includes('/submissions')) {
+    // Handle POST requests to /submissions
+    if (event.request.method === 'POST' && event.request.url.includes('/submissions')) {
+      try {
+        // Try to fetch - if it fails, we assume the user is offline
+        const networkResponse = await fetch(event.request);
+        return networkResponse; // If fetch succeeds, let it go through
+      } catch (error) {
+        // Network error, assume offline
+        return new Response(
+          JSON.stringify({ error: 'You are currently offline. Please try submitting your feedback again when you have an internet connection.' }),
+          {
+            status: 503, // Service Unavailable (appropriate for offline submission failure)
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+    }
+
+    // For API requests (GET requests containing '/submissions')
+    if (event.request.method === 'GET' && event.request.url.includes('/submissions')) {
       const cache = await caches.open(API_CACHE);
       try {
         const networkResponse = await fetch(event.request);

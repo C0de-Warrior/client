@@ -81,7 +81,7 @@ function IndexPage() {
     } catch (error) {
       console.error('Error submitting feedback:', error);
       if (!navigator.onLine) {
-        setSubmitMessage('You are offline. Your message has been saved and will be submitted when you get back online.');
+        setSubmitMessage('You are offline. Please try again when you are online.');
       } else {
         setSubmitMessage('There was an error submitting your comment. Please try again.');
       }
