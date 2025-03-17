@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+//import { useNavigate } from 'react-router-dom';
 import styles from './IndexPage.module.css';
 
 function IndexPage() {
@@ -12,7 +12,7 @@ function IndexPage() {
   const [submitMessage, setSubmitMessage] = useState('');
   const [submitType, setSubmitType] = useState(''); // "success" or "error"
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
 
   // Monitor online/offline status
   useEffect(() => {
