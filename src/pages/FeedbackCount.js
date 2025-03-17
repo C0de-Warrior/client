@@ -3,11 +3,17 @@ import styles from './FeedbackCount.module.css';
 
 function FeedbackCount() {
   const [count, setCount] = useState(0);
+  const backendURL = process.env.REACT_APP_BACKEND_URL; // Get the backend URL environment variable
+  const websocketURL = process.env.REACT_APP_WEBSOCKET_URL || 'ws://localhost:8080/'; // Get the WebSocket URL environment variable
 
   // Fetch the count of feedback submissions
   const fetchCount = useCallback(async () => {
+    if (!backendURL) {
+      console.error("REACT_APP_BACKEND_URL is not set!");
+      return;
+    }
     try {
-      const response = await fetch('http://localhost:5000/submissions');
+      const response = await fetch(`${backendURL}/submissions`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -16,14 +22,14 @@ function FeedbackCount() {
     } catch (error) {
       console.error('Error fetching feedback count:', error);
     }
-  }, []);
+  }, [backendURL]);
 
   useEffect(() => {
     // Initial fetch
     fetchCount();
 
     // Set up WebSocket for real-time updates
-    const ws = new WebSocket('ws://localhost:8080/');
+    const ws = new WebSocket(websocketURL);
     ws.onmessage = (message) => {
       console.log('WebSocket message:', message.data);
       if (message.data === 'new_submission') {
@@ -31,10 +37,18 @@ function FeedbackCount() {
       }
     };
 
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket closed');
+    };
+
     return () => {
       ws.close();
     };
-  }, [fetchCount]);
+  }, [fetchCount, websocketURL]);
 
   return (
     <span className={styles.badge}>
