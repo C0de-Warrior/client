@@ -1,0 +1,34 @@
+/* src/FeedbackPage.module.css */
+.container {
+    padding: 20px;
+    background-color: #e8f5e9; /* Light green background */
+  }
+  
+  .feedbackTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    border: 1px solid #81c784; /* Light green border */
+  }
+  
+  .feedbackTable th,
+  .feedbackTable td {
+    border: 1px solid #81c784;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .feedbackTable th {
+    background-color: #a5d6a7; /* Lighter green for header */
+    font-weight: bold;
+    color: #2e7d32;
+  }
+  
+  .feedbackTable tbody tr:nth-child(even) {
+    background-color: #c8e6c9; /* Alternate row color */
+  }
+  
+  .feedbackTable tbody tr:hover {
+    background-color: #a5d6a7;
+  }
+  

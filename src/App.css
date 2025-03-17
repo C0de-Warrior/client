@@ -1,20 +1,19 @@
+/* src/app.css */
+body {
+  background-color: #e8f5e9;  /* Light green background */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #2e7d32; /* Dark green text */
+  margin: 0;
+  padding: 0;
+}
+
 .App {
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
+/* Optional: Style for header or logo if you use them */
 .App-header {
-  background-color: #282c34;
+  background-color: #66bb6a; /* Medium green */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -25,7 +24,7 @@
 }
 
 .App-link {
-  color: #61dafb;
+  color: #a5d6a7; /* Lighter green for links */
 }
 
 @keyframes App-logo-spin {
@@ -34,5 +33,11 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
   }
 }
