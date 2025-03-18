@@ -20,6 +20,9 @@ self.addEventListener('install', event => {
         console.log('[Service Worker] Caching static assets');
         return cache.addAll(STATIC_ASSETS);
       })
+      .catch(error => {
+        console.error('[Service Worker] Failed to cache static assets:', error);
+      })
   );
 });
 
@@ -28,29 +31,34 @@ self.addEventListener('activate', event => {
   console.log('[Service Worker] Activating...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
-      return Promise.all([
-        ...cacheNames.map(name => {
+      return Promise.all(
+        cacheNames.map(name => {
           if (name !== CACHE_NAME && name !== API_CACHE) {
             console.log('[Service Worker] Removing old cache:', name);
             return caches.delete(name);
           }
-        }),
-        // Proactively cache API data
-        caches.open(API_CACHE).then(cache => {
-          console.log('[Service Worker] Proactively caching API data');
-          return fetch(new URL('/submissions', self.registration.scope).href)
-            .then(response => {
-              if (response.ok) {
-                return cache.put(new URL('/submissions', self.registration.scope).href, response.clone()); // Use the full URL as the cache key for consistency
-              } else {
-                console.warn('[Service Worker] Failed to proactively cache API data:', response.status);
-              }
-            })
-            .catch(error => {
-              console.error('[Service Worker] Error proactively caching API data:', error);
-            });
         })
-      ]);
+      );
+    })
+    .then(() => {
+      return caches.open(API_CACHE).then(cache => {
+        console.log('[Service Worker] Proactively caching API data');
+        const submissionsUrl = new URL('/submissions', self.registration.scope).href;
+        return fetch(submissionsUrl)
+          .then(response => {
+            if (response.ok) {
+              return cache.put(submissionsUrl, response.clone());
+            } else {
+              console.warn('[Service Worker] Failed to proactively cache API data:', response.status);
+            }
+          })
+          .catch(error => {
+            console.error('[Service Worker] Error proactively caching API data:', error);
+          });
+      });
+    })
+    .catch(error => {
+      console.error('[Service Worker] Error during activation:', error);
     })
   );
 });
@@ -78,28 +86,25 @@ self.addEventListener('fetch', event => {
     // Handle POST requests to /submissions
     if (event.request.method === 'POST' && event.request.url.includes('/submissions')) {
       try {
-        // Try to fetch - if it fails, we assume the user is offline
         const networkResponse = await fetch(event.request);
-        return networkResponse; // If fetch succeeds, let it go through
+        return networkResponse;
       } catch (error) {
-        // Network error, assume offline
         return new Response(
           JSON.stringify({ error: 'You are currently offline. Please try submitting your feedback again when you have an internet connection.' }),
           {
-            status: 503, // Service Unavailable (appropriate for offline submission failure)
+            status: 503,
             headers: { 'Content-Type': 'application/json' },
           }
         );
       }
     }
 
-    // For API requests (GET requests containing '/submissions')
+    // For API GET requests (requests containing '/submissions')
     if (event.request.method === 'GET' && event.request.url.includes('/submissions')) {
       const cache = await caches.open(API_CACHE);
       try {
         const networkResponse = await fetch(event.request);
         if (networkResponse && networkResponse.status === 200) {
-          // Cache the successful network response
           cache.put(event.request, networkResponse.clone());
         }
         return networkResponse;
@@ -108,8 +113,7 @@ self.addEventListener('fetch', event => {
         if (cachedResponse) {
           return cachedResponse;
         }
-        // Return an empty array as fallback so that the client gets valid JSON
-        return new Response(JSON.stringify(), {
+        return new Response(JSON.stringify([]), {
           headers: { 'Content-Type': 'application/json' },
           status: 200
         });
