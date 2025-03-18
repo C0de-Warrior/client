@@ -1,10 +1,11 @@
+// src/pages/FeedbackCount.js
 import React, { useEffect, useState, useCallback } from 'react';
 import styles from './FeedbackCount.module.css';
 
 function FeedbackCount() {
   const [count, setCount] = useState(0);
-  const backendURL = process.env.REACT_APP_BACKEND_URL; // Get the backend URL environment variable
-  const websocketURL = process.env.REACT_APP_WEBSOCKET_URL || 'ws://localhost:8080/'; // Get the WebSocket URL environment variable
+  const backendURL = process.env.REACT_APP_BACKEND_URL; // e.g., https://your-backend-domain.onrender.com
+  const websocketURL = process.env.REACT_APP_WEBSOCKET_URL || 'ws://localhost:8080/';
 
   // Fetch the count of feedback submissions
   const fetchCount = useCallback(async () => {
@@ -18,7 +19,7 @@ function FeedbackCount() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setCount(data.length);
+      setCount(Array.isArray(data) ? data.length : 0);
     } catch (error) {
       console.error('Error fetching feedback count:', error);
     }
@@ -27,7 +28,6 @@ function FeedbackCount() {
   useEffect(() => {
     // Initial fetch
     fetchCount();
-
     // Set up WebSocket for real-time updates
     const ws = new WebSocket(websocketURL);
     ws.onmessage = (message) => {
@@ -36,25 +36,12 @@ function FeedbackCount() {
         fetchCount();
       }
     };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    ws.onclose = () => {
-      console.log('WebSocket closed');
-    };
-
-    return () => {
-      ws.close();
-    };
+    ws.onerror = (error) => console.error('WebSocket error:', error);
+    ws.onclose = () => console.log('WebSocket closed');
+    return () => ws.close();
   }, [fetchCount, websocketURL]);
 
-  return (
-    <span className={styles.badge}>
-      {count}
-    </span>
-  );
+  return <span className={styles.badge}>{count}</span>;
 }
 
 export default FeedbackCount;

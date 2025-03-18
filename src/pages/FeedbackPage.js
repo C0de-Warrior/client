@@ -1,14 +1,13 @@
 // src/pages/FeedbackPage.js
-
 import React, { useState, useEffect, useCallback } from 'react';
 import styles from './FeedbackPage.module.css';
 
 function FeedbackPage() {
-  const [feedbackData, setFeedbackData] = useState();
+  const [feedbackData, setFeedbackData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const backendURL = process.env.REACT_APP_BACKEND_URL; // Get the environment variable
-
+  const backendURL = process.env.REACT_APP_BACKEND_URL; // e.g., https://your-backend-domain.onrender.com
+     
   // Function to fetch feedback data from the backend
   const fetchFeedback = useCallback(async () => {
     if (!backendURL) {
@@ -23,13 +22,7 @@ function FeedbackPage() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      // Ensure the returned data is an array
-      if (!Array.isArray(data)) {
-        console.error('Fetched data is not an array:', data);
-        setFeedbackData();
-      } else {
-        setFeedbackData(data);
-      }
+      setFeedbackData(Array.isArray(data) ? data : []);
       setLoading(false);
     } catch (err) {
       setError(err);
@@ -38,38 +31,25 @@ function FeedbackPage() {
     }
   }, [backendURL]);
 
-  // Initial fetch when the component mounts
+  // Fetch data when component mounts
   useEffect(() => {
     fetchFeedback();
   }, [fetchFeedback]);
 
-  // WebSocket setup: listen for new submissions and trigger a fetch
+  // Set up WebSocket connection for real-time updates
   useEffect(() => {
-    const wsURL = process.env.REACT_APP_WEBSOCKET_URL || 'ws://localhost:8080/'; // Use env var or default
+    const wsURL = process.env.REACT_APP_WEBSOCKET_URL || 'ws://localhost:8080/';
     const ws = new WebSocket(wsURL);
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-    };
-
+    ws.onopen = () => console.log('WebSocket connected');
     ws.onmessage = (message) => {
       console.log('WebSocket message:', message.data);
       if (message.data === 'new_submission') {
         fetchFeedback();
       }
     };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    ws.onclose = () => {
-      console.log('WebSocket closed');
-    };
-
-    // Clean up the connection when the component unmounts
-    return () => {
-      ws.close();
-    };
+    ws.onerror = (error) => console.error('WebSocket error:', error);
+    ws.onclose = () => console.log('WebSocket closed');
+    return () => ws.close();
   }, [fetchFeedback]);
 
   if (loading) {
@@ -79,7 +59,6 @@ function FeedbackPage() {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className={styles.container}>
@@ -87,7 +66,6 @@ function FeedbackPage() {
       </div>
     );
   }
-
   return (
     <div className={styles.container}>
       <h1>Feedback Page</h1>
